@@ -1,0 +1,1 @@
+"""Générer des données de codages dans un fichier CSV."""
