@@ -4,12 +4,14 @@ It can be used to check if e.g. a given phoneme inventory yields unambiguous
 transcriptions.
 """
 
+
 def LeftQuotientOfWord(ps, w):
     """Yields the suffixes of w after removing any prefix in ps."""
     for p in ps:
         if w.startswith(p):
             yield w[len(p):]
     return
+
 
 def LeftQuotient(ps, ws):
     """Returns the set of suffixes of any word in ws after removing any prefix
@@ -21,10 +23,16 @@ def LeftQuotient(ps, ws):
             qs.add(q)
     return qs
 
+
 def IsUniquelyDecodable(cs):
     """Checks if the set of codewords cs is uniquely decodable via the
-    Sardinas-Patterson algorithm."""
-    NL, i = len(str(cs)) * len(str(max(len(x) for x in cs))), 1 # Levenstein's upper bound for termination
+    Sardines-Patterson algorithm.
+    Args:
+        cs (set): A set of codewords.
+    Returns:
+        bool: True if the set of codewords cs is uniquely decodable.
+    """
+    NL, i = len(str(cs)) * len(str(max(len(x) for x in cs))), 1  # Levenshtein's upper bound for termination
     s = LeftQuotient(cs, cs)
     s.discard('')
     if len(s) == 0:
@@ -42,4 +50,3 @@ def IsUniquelyDecodable(cs):
     # for x in s & cs:
     #     print('Dangling suffix: {}'.format(x))
     return False
-
