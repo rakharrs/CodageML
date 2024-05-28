@@ -1,4 +1,6 @@
 import random
+from math import sqrt
+
 from sardinasPatterson import IsUniquelyDecodable
 import csv
 
@@ -35,7 +37,7 @@ def set_to_string(s):
 def get_length_ecartype(codes):
     n = len(codes)
     avg_length = get_avg_length(codes)
-    return (sum((len(code) - avg_length) ** 2 for code in codes)) / n
+    return sqrt((sum((len(code) - avg_length) ** 2 for code in codes)) / n)
 
 
 def get_frequencies_percent(codes, max_length):
@@ -49,20 +51,22 @@ def get_frequencies_percent(codes, max_length):
     frequencies_0 = []
     frequencies_1 = []
     index = 0
+    total = 0
     total_0 = 0
     total_1 = 0
     for code in codes:
-        total_0 += count_occurrences(code, '0')
-        total_1 += count_occurrences(code, '1')
+        total += 1
+        # total_0 += count_occurrences(code, '0')
+        # total_1 += count_occurrences(code, '1')
     for code in codes:
         if total_0 == 0:
             frequencies_0.append(0)
         else:
-            frequencies_0.append(count_occurrences(code, '0') * 100 / total_0)
+            frequencies_0.append(count_occurrences(code, '0') * 10 / total)
         if total_1 == 0:
             frequencies_1.append(0)
         else:
-            frequencies_1.append(count_occurrences(code, '1') * 100 / total_1)
+            frequencies_1.append(count_occurrences(code, '1') * 10 / total)
         index += 1
 
     while index < max_length:
@@ -83,8 +87,6 @@ def get_frequencies(codes, max_length):
     frequencies_0 = []
     frequencies_1 = []
     index = 0
-    total_0 = 0
-    total_1 = 0
     for code in codes:
         frequencies_0.append(count_occurrences(code, '0'))
         frequencies_1.append(count_occurrences(code, '1'))
@@ -109,7 +111,8 @@ def get_avg_length(codes):
     avg = 0
     for code in codes:
         avg += len(code)
-    return avg / len(codes)
+    # return avg / len(codes)
+    return avg / 7
 
 
 def generate_word():
@@ -211,39 +214,22 @@ def generate_model(n):
         print("Generating model data...")
         is_unique_to_generate = True
         # index = int(100)
-        for i in range(0, n):
-            print("Generating ", len(data_generated) + 1, "/", n)
-            codes = generate_code((n % 6)+2)
+        while len(data_generated) < n:
+
+            codes = generate_language()
             if is_unique_to_generate:
                 while not IsUniquelyDecodable(codes):
-                    codes = generate_code((n % 6) + 2)
+                    codes = generate_language()
                 is_unique_to_generate = False
             else:
                 while IsUniquelyDecodable(codes):
+                    # codes = generate_language()
                     codes = generate_language()
                 is_unique_to_generate = True
+            print(len(data_generated) + 1, "/", n, "- Generated = ", (len(data_generated) % 9)+2)
 
             writer.writerow(generate_model_row(codes))
             data_generated.add(set_to_string(codes))
-
-        # while len(data_generated) < n:
-        #     print("Generating ", len(data_generated) + 1, "/", n)
-        #     rand_data = generate_language()
-        #     if is_unique_to_generate:
-        #         while not IsUniquelyDecodable(rand_data):
-        #             rand_data = generate_language()
-        #         is_unique_to_generate = False
-        #     else:
-        #         while IsUniquelyDecodable(rand_data):
-        #             # index -= 1
-        #             # if index > 0:
-        #             #     rand_data = generate_data_redundant_code()
-        #             # else:
-        #             rand_data = generate_language()
-        #         is_unique_to_generate = True
-        #
-        #     writer.writerow(generate_model_row(rand_data))
-        #     data_generated.add(set_to_string(rand_data))
 
 
 # print(get_frequencies({'01', '101'}, 10))
@@ -271,7 +257,7 @@ def generate_redundant_code(element):
         val.add(word)
     return val
 
-def generate_code(word_length):
+def generate_code(language_length):
     """
     Args:
         word_length (int): word length
@@ -279,16 +265,8 @@ def generate_code(word_length):
         set: set of codes/words
     """
     val = set()
-    language_length = random.randint(2, 10)
-    index = 100
     while len(val) < language_length:
-        if index < 0:
-            break
-        index += -1
-        word = ''
-        for i in range(word_length):
-            word += str(random.randint(0,1))
-        val.add(word)
+        val.add(generate_word())
     return val
 
 def generate_data_redundant_code():
