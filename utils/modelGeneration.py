@@ -7,11 +7,11 @@ import csv
 columns = [
     'language', 'uniquely_decodable', 'nbr_code', 'avg_length',
     'min_length', 'max_length', 'length_ecartype',
+     'consecutive_ones', 'consecutive_zeros',
     'freq_0', 'freq_1', 'freq_p_0', 'freq_p_1',
-    'freq_p_0_1', 'freq_p_0_2', 'freq_p_0_3', 'freq_p_0_4', 'freq_p_0_5',
-    'freq_p_0_6', 'freq_p_0_7', 'freq_p_0_8', 'freq_p_0_9', 'freq_p_0_10',
-    'freq_p_1_1', 'freq_p_1_2', 'freq_p_1_3', 'freq_p_1_4', 'freq_p_1_5',
-    'freq_p_1_6', 'freq_p_1_7', 'freq_p_1_8', 'freq_p_1_9', 'freq_p_1_10',
+    'max_same_length',
+
+    # 'begin_1', 'begin_0', 'end_1', 'end_0',
 
     'freq_0_1', 'freq_0_2', 'freq_0_3', 'freq_0_4', 'freq_0_5',
     'freq_0_6', 'freq_0_7', 'freq_0_8', 'freq_0_9', 'freq_0_10',
@@ -40,6 +40,38 @@ def get_length_ecartype(codes):
     return sqrt((sum((len(code) - avg_length) ** 2 for code in codes)) / n)
 
 
+def string_to_set(data_string):
+    """
+      Converts a comma-separated string to a set.
+
+      Args:
+          data_string: The string containing comma-separated data.
+
+      Returns:
+          A set containing the individual elements from the string.
+    """
+    # Split the string by comma and remove any leading/trailing spaces
+    data_list = [item.strip() for item in data_string.split(",")]
+    return set(data_list)
+
+
+def binary_ecartype(codes):
+    """
+    Calculates the ecartype of 1 and 0 in the codes.
+    Args:
+        codes (set): The codes.
+    """
+    n = 2
+    string_code = set_to_string(codes).replace(',', '')
+    total_1 = 0
+    total_0 = 0
+    for string in string_code:
+        if string == '1':
+            total_1 += 1
+        else:
+            total_0 += 1
+
+
 def get_frequencies_percent(codes, max_length):
     """
     Args:
@@ -51,22 +83,10 @@ def get_frequencies_percent(codes, max_length):
     frequencies_0 = []
     frequencies_1 = []
     index = 0
-    total = 0
-    total_0 = 0
-    total_1 = 0
+    total = len(codes)
     for code in codes:
-        total += 1
-        # total_0 += count_occurrences(code, '0')
-        # total_1 += count_occurrences(code, '1')
-    for code in codes:
-        if total_0 == 0:
-            frequencies_0.append(0)
-        else:
-            frequencies_0.append(count_occurrences(code, '0') * 10 / total)
-        if total_1 == 0:
-            frequencies_1.append(0)
-        else:
-            frequencies_1.append(count_occurrences(code, '1') * 10 / total)
+        frequencies_0.append(count_occurrences(code, '0') / total)
+        frequencies_1.append(count_occurrences(code, '1') / total)
         index += 1
 
     while index < max_length:
@@ -75,6 +95,7 @@ def get_frequencies_percent(codes, max_length):
         index += 1
 
     return frequencies_0, frequencies_1
+
 
 def get_frequencies(codes, max_length):
     """
@@ -112,7 +133,7 @@ def get_avg_length(codes):
     for code in codes:
         avg += len(code)
     # return avg / len(codes)
-    return avg / 7
+    return avg / len(codes)
 
 
 def generate_word():
@@ -154,7 +175,7 @@ def generate_language():
         set: Random language.
     """
     val = set()
-    language_length = random.randint(2, 10)
+    language_length = random.randint(1, 10)
     while len(val) < language_length:
         val.add(generate_word())
     return val
@@ -175,6 +196,12 @@ def get_max_length(codes):
             max_length = len(code)
     return max_length
 
+def get_max_same_length(codes):
+    max = 0
+    for code in codes:
+        if len(code) > max:
+            max += 1
+    return max
 
 def generate_model_row(code):
     """
@@ -196,13 +223,21 @@ def generate_model_row(code):
 
     freq__0 = sum(freq_0) / len(code)
     freq__1 = sum(freq_1) / len(code)
-    freq__p_0 = sum(freq_p_0) / len(code)
-    freq__p_1 = sum(freq_p_1) / len(code)
+    code_string = set_to_string(code).replace(',', '')
+
+    freq__p_0 = sum(freq_0) / len(code_string)
+    freq__p_1 = sum(freq_1) / len(code_string)
+    max_same_length = get_max_same_length(code)
+
+    # tet = code_str.replace(',', '')
+    consecutive_zeros, consecutive_ones = count_consecutives_bits_set(code)
 
     frequencies = freq_0 + freq_1
     frequencies_p = freq_p_0 + freq_p_1
-    return [code_str, int(uniquely_decodable), nbr_code, avg_length, min_length, max_length, length_ecartype, freq__0,
-            freq__1, freq__p_0, freq__p_1] + frequencies_p + frequencies
+    return [code_str, int(uniquely_decodable), nbr_code, avg_length, min_length, max_length, length_ecartype,
+            consecutive_ones, consecutive_zeros,
+            freq__0,
+            freq__1, freq__p_0, freq__p_1, max_same_length] + frequencies
 
 
 def generate_model(n):
@@ -226,7 +261,7 @@ def generate_model(n):
                     # codes = generate_language()
                     codes = generate_language()
                 is_unique_to_generate = True
-            print(len(data_generated) + 1, "/", n, "- Generated = ", (len(data_generated) % 9)+2)
+            print(len(data_generated) + 1, "/", n, "- Generated = ", (len(data_generated) % 9) + 2)
 
             writer.writerow(generate_model_row(codes))
             data_generated.add(set_to_string(codes))
@@ -257,6 +292,7 @@ def generate_redundant_code(element):
         val.add(word)
     return val
 
+
 def generate_code(language_length):
     """
     Args:
@@ -269,10 +305,78 @@ def generate_code(language_length):
         val.add(generate_word())
     return val
 
+
 def generate_data_redundant_code():
     element = random.randint(0, 1)
     return generate_redundant_code(str(element))
 
 
-generate_model(10000)
+def count_consecutive_bits(binary_string):
+    """
+  Counts the number of consecutive 1s or 0s in a binary string.
+
+  Args:
+      binary_string: The string representing the binary number.
+
+  Returns:
+      A tuple containing two elements:
+          - The count of consecutive 1s.
+          - The count of consecutive 0s.
+  """
+    consecutives_0 = 0
+    consecutives_1 = 0
+    temp = ''
+    for char in binary_string:
+        if char == temp:
+            if char == '0':
+                consecutives_0 += 1
+            if char == '1':
+                consecutives_1 += 1
+        else:
+            temp = char
+    return consecutives_1, consecutives_0
+
+def count_consecutives_bits_set(setcode):
+    consecutive_ones = 0
+    consecutive_zeros = 0
+    for code in setcode:
+        consecutives = count_consecutive_bits(code)
+        if len(code) - 1 <= 0:
+            consecutive_ones = 0
+            consecutive_zeros = 0
+        else:
+            consecutive_zeros += consecutives[0]
+            consecutive_ones += consecutives[1]
+    return consecutive_ones, consecutive_zeros
+
+def coun_differences_01(word):
+    count = 0
+    index = 0
+    while index < len(word):
+        if int(word[index]) < int(word[index + 1]):
+            count += 1
+        index += 1
+    return count
+
+def coun_differences_10(word):
+    count = 0
+    index = 0
+    while index < len(word):
+        if int(word[index]) > int(word[index + 1]):
+            count += 1
+        index += 1
+    return count
+
+
+
+
+
+# Example usage
+# binary_string = "1000"
+# consecutive_ones, consecutive_zeros = count_consecutive_bits(binary_string)
+# print(consecutive_zeros)
+# print(f"Consecutive 1s: {consecutive_ones}, Consecutive 0s: {consecutive_zeros}")
 # print(generate_data_redundant_code())
+
+# generate_model(10000)
+# print(count_consecutive_bits('00000'))

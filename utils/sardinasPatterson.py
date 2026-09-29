@@ -7,7 +7,7 @@ transcriptions.
 
 def LeftQuotientOfWord(ps, w):
     """Yields the suffixes of w after removing any prefix in ps."""
-    for p in ps:
+    for p in ps:#
         if w.startswith(p):
             yield w[len(p):]
     return
